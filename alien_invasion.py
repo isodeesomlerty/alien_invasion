@@ -4,6 +4,7 @@ from time import sleep
 import pygame
 
 from settings import Settings
+from sound_effects import SoundEffects
 from game_stats import GameStats
 from scoreboard import Scoreboard
 from button import Button
@@ -19,6 +20,8 @@ class AlienInvasion:
         pygame.init()
         self.clock = pygame.time.Clock()
         self.settings = Settings()
+
+        self.sound_effects = SoundEffects()
 
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.settings.screen_width = self.screen.get_rect().width
@@ -167,6 +170,7 @@ class AlienInvasion:
         if len(self.bullets) < self.settings.bullets_allowed:
             new_bullet = Bullet(self)
             self.bullets.add(new_bullet)
+            self.sound_effects.play_shooting_sound()
 
 
     def _update_bullets(self):
@@ -193,6 +197,7 @@ class AlienInvasion:
                 self.stats.score += self.settings.alien_points * len(aliens)
             self.sb.prep_score()
             self.sb.check_high_score()
+            self.sound_effects.play_alien_explosion_sound()
 
         if not self.aliens:
             # Destroy existing bullets and create new fleet.
@@ -267,6 +272,7 @@ class AlienInvasion:
     
     def _ship_hit(self):
         """Respond to the ship being hit by an alien."""
+        self.sound_effects.play_ship_explosion_sound()
         if self.stats.ships_left > 0:
             # Decrement ships_left.
             self.stats.ships_left -= 1
@@ -281,7 +287,7 @@ class AlienInvasion:
             self.ship.center_ship()
 
             # Pause.
-            sleep(0.5)
+            sleep(2)
         else:
             self.game_active = False
             pygame.mouse.set_visible(True)
