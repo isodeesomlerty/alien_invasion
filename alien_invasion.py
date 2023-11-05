@@ -9,8 +9,9 @@ from game_stats import GameStats
 from scoreboard import Scoreboard
 from button import Button
 from ship import Ship
-from bullet import Bullet
+from ship_bullet import ShipBullet
 from alien import Alien
+from alien_bullet import AlienBullet
 
 class AlienInvasion:
     """Overall class to manage game assets and behavior."""
@@ -33,8 +34,9 @@ class AlienInvasion:
         self.sb = Scoreboard(self)
 
         self.ship = Ship(self)
-        self.bullets = pygame.sprite.Group()
+        self.ship_bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
+        self.alien_bullets = pygame.sprite.Group()
 
         self._create_fleet()
 
@@ -60,8 +62,9 @@ class AlienInvasion:
 
             if self.game_active:
                 self.ship.update()
-                self._update_bullets()
+                self._update_ship_bullets()
                 self._update_aliens()
+                self._update_alien_bullets()
             
             self._update_screen()
             self.clock.tick(60)
@@ -132,7 +135,8 @@ class AlienInvasion:
             self.game_active = True
 
             # Get rid of any remaining bullets and aliens.
-            self.bullets.empty()
+            self.ship_bullets.empty()
+            self.alien_bullets.empty()
             self.aliens.empty()
 
             # Create a new fleet and center the ship.
@@ -152,7 +156,7 @@ class AlienInvasion:
         elif event.key == pygame.K_q:
             self._quit_game()
         elif event.key == pygame.K_SPACE:
-            self._fire_bullet()
+            self._fire_ship_bullet()
         elif event.key == pygame.K_p:
             self._start_game()
 
@@ -165,23 +169,26 @@ class AlienInvasion:
             self.ship.moving_left = False
 
     
-    def _fire_bullet(self):
+    def _fire_ship_bullet(self):
         """Create a new bullet and add it the bullets group."""
-        if len(self.bullets) < self.settings.bullets_allowed:
-            new_bullet = Bullet(self)
-            self.bullets.add(new_bullet)
+        if len(self.ship_bullets) < self.settings.ship_bullets_allowed:
+            new_ship_bullet = ShipBullet(self)
+            self.ship_bullets.add(new_ship_bullet)
             self.sound_effects.play_shooting_sound()
 
 
-    def _update_bullets(self):
-        """Update position of bullets and get rid of old bullets."""
+    def _update_ship_bullets(self):
+        """
+        Update position of bullets from the ship.
+        Get rid of old bullets.
+        """
         # Update bullet positions.
-        self.bullets.update()
+        self.ship_bullets.update()
 
         # Get rid of bullets that have disappeared.
-        for bullet in self.bullets.copy():
-            if bullet.rect.bottom <= 0:
-                self.bullets.remove(bullet)
+        for ship_bullet in self.ship_bullets.copy():
+            if ship_bullet.rect.bottom <= 0:
+                self.ship_bullets.remove(ship_bullet)
 
         self._check_bullet_alien_collisions()
         
@@ -189,7 +196,7 @@ class AlienInvasion:
     def _check_bullet_alien_collisions(self):
         """Respond to bullet-alien collisions."""
         # Remove any bullets and aliens that have collided.
-        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens,
+        collisions = pygame.sprite.groupcollide(self.ship_bullets, self.aliens,
                                                 True, True)
         
         if collisions:
@@ -201,7 +208,7 @@ class AlienInvasion:
 
         if not self.aliens:
             # Destroy existing bullets and create new fleet.
-            self.bullets.empty()
+            self.ship_bullets.empty()
             self._create_fleet()
             self.settings.increase_speed()
 
@@ -216,9 +223,17 @@ class AlienInvasion:
 
     
     def _update_aliens(self):
-        """Check if the fleet is at an edge, then update positions."""
+        """Update the fleet of aliens."""
         self._check_fleet_edges()
         self.aliens.update()
+
+        # Get the time passed since last call (frame).
+        time_passed = self.clock.get_time() / 1000.0
+
+        # Allow for the aliens to shoot.
+        for alien in self.aliens.sprites():
+            alien.shoot_cooldown -= time_passed
+            alien.shoot()
 
         # Look for alien-ship collisions.
         if pygame.sprite.spritecollideany(self.ship, self.aliens):
@@ -226,6 +241,26 @@ class AlienInvasion:
 
         # Look for aliens hitting the bottom of the screen.
         self._check_aliens_bottom()
+
+
+    def _update_alien_bullets(self):
+        """Update position of bullets from the aliens."""
+        # Update bullet positions.
+        self.alien_bullets.update()
+
+        # Get rid of bullets that have disappeared.
+        for alien_bullet in self.alien_bullets.copy():
+            if alien_bullet.rect.top >= self.settings.screen_height:
+                self.alien_bullets.remove(alien_bullet)
+
+        self._check_bullet_ship_collision()
+
+
+    def _check_bullet_ship_collision(self):
+        """Respond to bullet-ship collisions."""
+        # Remove any bullets and ships that have collided.
+        if pygame.sprite.spritecollideany(self.ship, self.alien_bullets):
+            self._ship_hit()
 
 
     def _create_fleet(self):
@@ -279,7 +314,7 @@ class AlienInvasion:
             self.sb.prep_ships()
 
             # Get rid of any remaining bullets and aliens.
-            self.bullets.empty()
+            self.ship_bullets.empty()
             self.aliens.empty()
 
             # Create a new fleet and center the ship.
@@ -305,10 +340,13 @@ class AlienInvasion:
     def _update_screen(self):
         """Update images on the screen, and flip to the new screen."""
         self.screen.fill(self.settings.bg_color)
-        for bullet in self.bullets.sprites():
-            bullet.draw_bullet()
+        for ship_bullet in self.ship_bullets.sprites():
+            ship_bullet.draw_bullet()
         self.ship.blitme()
+
         self.aliens.draw(self.screen)
+        for alien_bullet in self.alien_bullets.sprites():
+            alien_bullet.draw_bullet()
 
         # Draw the score information.
         self.sb.show_score()
