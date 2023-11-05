@@ -32,6 +32,8 @@ Only Earth, our birthplace, still stands, and it's now yours defend.
 
 **Avoid Aliens:** Dodge alien ships! If you collide with an alien or an alien reaches the bottom of the screen, you lose a life.  
 
+**Dodge Bullets** You also lose a life if you are hit by alien bullets. Remember that shooter aliens are red, so try to kill them as soon as you can.
+
 **Quit the Game:** Press Q at any time to quit the game.  
 
 ## Installation
