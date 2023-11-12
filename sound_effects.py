@@ -13,11 +13,13 @@ class SoundEffects:
         self.alien_explosion_sound = (mixer.Sound
                                       ('sound/sliding_door_truncated.wav'))
         self.ship_explosion_sound = mixer.Sound('sound/severe_crash.wav')
+        self.shield_explosion_sound = mixer.Sound('sound/descending_crash.wav')
 
         # Set the volume for the background music and sound effects.
         mixer.music.set_volume(0.1)
         self.shooting_sound.set_volume(0.1)
         self.alien_explosion_sound.set_volume(0.1)
+        self.shield_explosion_sound.set_volume(0.25)
         self.ship_explosion_sound.set_volume(0.5)
 
 
@@ -26,7 +28,6 @@ class SoundEffects:
         mixer.music.load('sound/raf_atmosphere.wav')
         mixer.music.set_volume(3)
         mixer.music.play(-1)
-
 
 
     def play_shooting_sound(self):
@@ -41,4 +42,9 @@ class SoundEffects:
 
     def play_ship_explosion_sound(self):
         """Play the ship explosion sound."""
-        self.ship_explosion_sound.play()    
+        self.ship_explosion_sound.play()
+
+
+    def play_shield_explosion_sound(self):
+        """Play the shield explosion sound."""
+        self.shield_explosion_sound.play()   

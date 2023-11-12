@@ -11,7 +11,7 @@ from button import Button
 from ship import Ship
 from ship_bullet import ShipBullet
 from alien import Alien
-from alien_bullet import AlienBullet
+from shield import Shield
 
 class AlienInvasion:
     """Overall class to manage game assets and behavior."""
@@ -34,6 +34,7 @@ class AlienInvasion:
         self.sb = Scoreboard(self)
 
         self.ship = Ship(self)
+        self.shield = Shield(self)
         self.ship_bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.alien_bullets = pygame.sprite.Group()
@@ -156,7 +157,11 @@ class AlienInvasion:
         elif event.key == pygame.K_q:
             self._quit_game()
         elif event.key == pygame.K_SPACE:
-            self._fire_ship_bullet()
+            if self.game_active:
+                self._fire_ship_bullet()
+        elif event.key == pygame.K_s:
+            if self.game_active:
+                self.shield.deploy_shield()
         elif event.key == pygame.K_p:
             self._start_game()
 
@@ -220,12 +225,15 @@ class AlienInvasion:
         """Start a new level."""
         self.stats.level += 1
         self.sb.prep_level()
+        self.shield.reset_shield()
 
     
     def _update_aliens(self):
         """Update the fleet of aliens."""
         self._check_fleet_edges()
         self.aliens.update()
+
+        self._check_shield_alien_collisions()
 
         # Get the time passed since last call (frame).
         time_passed = self.clock.get_time() / 1000.0
@@ -243,6 +251,29 @@ class AlienInvasion:
         self._check_aliens_bottom()
 
 
+    def _check_shield_alien_collisions(self):
+        # Remove any bullets that have collided with the shield.
+        # The shield is hit if an alien collides with it.
+        collisions = pygame.sprite.spritecollide(self.shield, self.aliens, True)
+        
+        if collisions:
+            for collision in collisions:
+                self.shield.hit()
+                self.stats.score += self.settings.alien_points
+            self.sb.prep_score()
+            self.sb.check_high_score()
+            self.sound_effects.play_alien_explosion_sound()
+
+        if not self.aliens:
+            # Destroy existing bullets and create new fleet.
+            self.ship_bullets.empty()
+            self._create_fleet()
+            self.settings.increase_speed()
+
+            # Increase level.
+            self._new_level()
+
+
     def _update_alien_bullets(self):
         """Update position of bullets from the aliens."""
         # Update bullet positions.
@@ -253,7 +284,16 @@ class AlienInvasion:
             if alien_bullet.rect.top >= self.settings.screen_height:
                 self.alien_bullets.remove(alien_bullet)
 
+        self._check_bullet_shield_collision()
         self._check_bullet_ship_collision()
+
+
+    def _check_bullet_shield_collision(self):
+        """Respond to bullet-shield collisions."""
+        collisions = pygame.sprite.spritecollide(self.shield, 
+                                                 self.alien_bullets, True)
+        for collision in collisions:
+            self.shield.hit()
 
 
     def _check_bullet_ship_collision(self):
@@ -308,6 +348,10 @@ class AlienInvasion:
     def _ship_hit(self):
         """Respond to the ship being hit by an alien."""
         self.sound_effects.play_ship_explosion_sound()
+
+        # Reset the shield.
+        self.shield.reset_shield()
+        
         if self.stats.ships_left > 0:
             # Decrement ships_left.
             self.stats.ships_left -= 1
@@ -344,12 +388,20 @@ class AlienInvasion:
             ship_bullet.draw_bullet()
         self.ship.blitme()
 
+        # Draw the shield if it's active.
+        self.shield.draw()
+
+        # Draw the shield availability status.
+        if self.shield.shield_available:
+            self.shield.draw_availability_status()
+
         self.aliens.draw(self.screen)
         for alien_bullet in self.alien_bullets.sprites():
             alien_bullet.draw_bullet()
 
         # Draw the score information.
         self.sb.show_score()
+
 
         # Draw the play button if the game is inactive.
         if not self.game_active:

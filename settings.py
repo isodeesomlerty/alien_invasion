@@ -29,6 +29,12 @@ class Settings:
         self.alien_bullet_color = (125, 0, 0)
         self.alien_bullet_speed = 2.5
 
+        # Shield settings
+        self.shield_width = 500
+        self.shield_height = 20
+        self.shield_color = (0, 0, 100)
+        self.shield_health = 3
+
         # How quickly the game speeds up
         self.speedup_scale = 1.5
         # How quickly the alien point values increase
