@@ -30,6 +30,8 @@ Only Earth, our birthplace, still stands, and it's now yours defend.
 
 **Shoot:** Press the SPACEBAR to fire bullets at the aliens.  
 
+**Deploy Shield:** Press S to deploy a shield if it is available. The shield degrades as it protects you from aliens and their bullets. 
+
 **Avoid Aliens:** Dodge alien ships! If you collide with an alien or an alien reaches the bottom of the screen, you lose a life.  
 
 **Dodge Bullets:** You also lose a life if you are hit by alien bullets. Remember that armed aliens are red, so try to kill them as soon as you can.
