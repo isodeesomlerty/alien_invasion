@@ -21,6 +21,8 @@ At the turn of the 9th milennia, following their ancient prophecy, the religious
 
 Only Earth, our birthplace, still stands, and it's now yours defend.
 
+![Alien Invasion Game](images/Alien%20Invasion%20Poster.png)
+
 ## How to Play
 **Start the Game:** Run the game, and click the "Play" button on the screen.  
 
